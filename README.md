@@ -5,4 +5,35 @@ but I think this is a reasonable trade-off. All other code is identical, and it 
 
 All methods return actual time.Time structs (if they were supposed to).
 
-Example code coming.
+example code:
+
+    import "github.com/ssoroka/ttime"
+
+    fmt.Printf("The starting time is %v", ttime.Now().UTC())
+
+    // in test this will not sleep at all, but it will advance the clock 5 seconds.
+    // in production, it's identical to time.Sleep
+    ttime.Sleep(5 * time.Second)
+    fmt.Printf("The time after sleeping for 5 seconds is %v", ttime.Now().UTC())
+
+    ttime.After(10 * time.Second, func() {
+      // This will execute after 10 seconds in production and immediately in tests.
+      fmt.Printf("It is now %v", ttime.Now().UTC())
+    })
+
+example test:
+
+    func TestFreezingTime(t *testing.T) {
+      ttime.Freeze() // freeze the system clock, at least as far as ttime is concerned.
+
+      // or freeze time at a specific date/time (eg, test leap-year support!):
+      now, err := time.Parse(time.RFC3339, "2012-02-29T00:00:00Z")
+      if err != nil { panic("date time parse failed") }
+      ttime.Freeze(now)
+      defer ttime.Unfreeze()
+
+      if !ttime.IsFrozen() {
+        t.Error("Time should be frozen here, so this should never happen.")
+      }
+      fmt.Printf("It is now %v", ttime.Now().UTC())
+    }
