@@ -4,24 +4,28 @@ import "time"
 
 var (
   currentTime time.Time
-  frozen bool
+  timeFrozen  bool
 )
+
+type Time struct {
+  time.Time
+}
 
 func Freeze(t time.Time) {
   currentTime = t
-  frozen = true
+  timeFrozen = true
 }
 
 func Unfreeze() {
-  frozen = false
+  timeFrozen = false
 }
 
 func IsFrozen() bool {
-  return frozen
+  return timeFrozen
 }
 
 func Now() time.Time {
-  if frozen {
+  if timeFrozen {
     return currentTime
   } else {
     return time.Now()
@@ -29,7 +33,7 @@ func Now() time.Time {
 }
 
 func After(d time.Duration) <-chan time.Time {
-  if frozen {
+  if timeFrozen {
     currentTime = currentTime.Add(d)
     c := make(chan time.Time, 1)
     c <- currentTime
@@ -40,11 +44,11 @@ func After(d time.Duration) <-chan time.Time {
 }
 
 func Tick(d time.Duration) <-chan time.Time {
-  if frozen {
-    currentTime = currentTime.Add(d)
+  if timeFrozen {
     c := make(chan time.Time, 1)
     go func() {
       for {
+        currentTime = currentTime.Add(d)
         c <- currentTime
       }
     }()
@@ -55,10 +59,9 @@ func Tick(d time.Duration) <-chan time.Time {
 }
 
 func Sleep(d time.Duration) {
-  if frozen && d > 0 {
+  if timeFrozen && d > 0 {
     currentTime = currentTime.Add(d)
   } else {
     time.Sleep(d)
   }
 }
-

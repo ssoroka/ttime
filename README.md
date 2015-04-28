@@ -24,7 +24,7 @@ example code:
 example test:
 
     func TestFreezingTime(t *testing.T) {
-      ttime.Freeze() // freeze the system clock, at least as far as ttime is concerned.
+      ttime.Freeze(time.Now()) // freeze the system clock, at least as far as ttime is concerned.
 
       // or freeze time at a specific date/time (eg, test leap-year support!):
       now, err := time.Parse(time.RFC3339, "2012-02-29T00:00:00Z")
@@ -32,8 +32,10 @@ example test:
       ttime.Freeze(now)
       defer ttime.Unfreeze()
 
-      if !ttime.IsFrozen() {
-        t.Error("Time should be frozen here, so this should never happen.")
+      // test leap-year-specific code
+      if !isLeapYear(ttime.Now()) {
+        t.Error("Oh no! isLeapYear is broken!")
       }
-      fmt.Printf("It is now %v", ttime.Now().UTC())
+
+      t.Logf("It is now %v", ttime.Now().UTC())
     }
