@@ -1,41 +1,42 @@
 This is an experiment in making time easier to mock in Go tests.
 
-Unfortunately the mock bleeds slightly in to the non-test code by use of the ttime library, instead of time itself,
-but I think this is a reasonable trade-off. All other code is identical, and it doesn't require adopting some new Time-like struct.
+You should be able to alias the ttime library to time to avoid having to change all your time.Now() methods to ttime.Now() throughout your code.
 
 All methods return actual time.Time structs (if they were supposed to).
 
 example code:
 
-    import "github.com/ssoroka/ttime"
+    import (
+      time "github.com/ssoroka/ttime"
+    )
 
-    fmt.Printf("The starting time is %v", ttime.Now().UTC())
+    fmt.Printf("The starting time is %v", time.Now().UTC())
 
     // in test this will not sleep at all, but it will advance the clock 5 seconds.
     // in production, it's identical to time.Sleep
-    ttime.Sleep(5 * time.Second)
-    fmt.Printf("The time after sleeping for 5 seconds is %v", ttime.Now().UTC())
+    time.Sleep(5 * time.Second)
+    fmt.Printf("The time after sleeping for 5 seconds is %v", time.Now().UTC())
 
-    ttime.After(10 * time.Second, func() {
+    time.After(10 * time.Second, func() {
       // This will execute after 10 seconds in production and immediately in tests.
-      fmt.Printf("It is now %v", ttime.Now().UTC())
+      fmt.Printf("It is now %v", time.Now().UTC())
     })
 
 example test:
 
     func TestFreezingTime(t *testing.T) {
-      ttime.Freeze(time.Now()) // freeze the system clock, at least as far as ttime is concerned.
+      time.Freeze(time.Now()) // freeze the system clock, at least as far as ttime is concerned.
 
       // or freeze time at a specific date/time (eg, test leap-year support!):
       now, err := time.Parse(time.RFC3339, "2012-02-29T00:00:00Z")
       if err != nil { panic("date time parse failed") }
-      ttime.Freeze(now)
-      defer ttime.Unfreeze()
+      time.Freeze(now)
+      defer time.Unfreeze()
 
       // test leap-year-specific code
-      if !isLeapYear(ttime.Now()) {
+      if !isLeapYear(time.Now()) {
         t.Error("Oh no! isLeapYear is broken!")
       }
 
-      t.Logf("It is now %v", ttime.Now().UTC())
+      t.Logf("It is now %v", time.Now().UTC())
     }
